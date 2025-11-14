@@ -1,0 +1,10 @@
+__pycache__/
+checkpoints/
+results/
+logs/
+tensorboard/
+*.pt
+*.pth
+*.ckpt
+.vscode/
+.DS_Store
