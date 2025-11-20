@@ -56,7 +56,7 @@ class iTransformer(nn.Module):
         self.projection = nn.Linear(d_model, pred_len, bias=True)
 
 
-    def forward(self, x_enc, x_mark_enc):
+    def forward(self, x_enc, x_mark_enc=None):
         # Normalization from Non-Stationary Transformer
         means = x_enc.mean(1, keepdim=True).detach()    # detach() => with no gradient
         x_enc = x_enc - means

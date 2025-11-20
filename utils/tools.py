@@ -1,8 +1,30 @@
 
 import torch
 
+import os
 import numpy as np
 
+
+def save_test_result(metrics, training_args, ckpt_name, result_path):
+    
+    result_name = f"testing_{ckpt_name}.txt"
+    save_path = os.path.join(result_path, result_name)
+
+    mae, mse, rmse, mape, mspe, corr = metrics
+
+    with open(save_path, "w") as f:
+        f.write("===== Evaluation Metrics =====\n")
+        f.write(f"MAE:  {mae}\n")
+        f.write(f"MSE:  {mse}\n")
+        f.write(f"RMSE: {rmse}\n")
+        f.write(f"MAPE: {mape}\n")
+        f.write(f"MSPE: {mspe}\n")
+        f.write(f"CORR: {corr}\n")
+
+        f.write("\n===== Training Arguments =====\n")
+        for key in vars(training_args):
+            if hasattr(training_args, key):
+                f.write(f"{key}: {getattr(training_args, key)}\n")
 
 class EarlyStopping:
     def __init__(self, patience=3, verbose=False, delta=0):

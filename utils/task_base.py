@@ -5,6 +5,7 @@ import torch.optim as optim
 
 import os
 import numpy as np
+from typing import Union
 
 class Task():
     def __init__(self, args):
@@ -73,7 +74,7 @@ class Task():
     
     def _save_checkpoint(self, 
                          model: nn.Module, 
-                         optimizer: optim, 
+                         optimizer: optim.Optimizer, 
                          epoch: int, 
                          scaler=None, 
                          verbose=False):
@@ -84,6 +85,7 @@ class Task():
             "epoch": epoch,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
+            "args": vars(self.args)
         }
 
         if scaler is not None:
@@ -93,9 +95,17 @@ class Task():
         if verbose:
             print(f"Checkpoint saved at {save_path}")
 
-    def _load_checkpoint(self, ckpt_name, model, optimizer=None, scaler=None, verbose=True):
-        load_path = os.path.join(self.ckpt_path, ckpt_name)
-        checkpoint = torch.load(load_path, map_location="cpu")
+    def _load_checkpoint(self, 
+                         ckpt_name: str, 
+                         model: nn.Module, 
+                         optimizer: Union[optim.Optimizer, None]=None, 
+                         scaler=None, 
+                         verbose=True):
+        ckpt_list = list(map(lambda x: os.path.splitext(x)[0], os.listdir(self.ckpt_path)))
+        assert ckpt_name in ckpt_list, f"{ckpt_name} is not exist in {self.ckpt_path}"
+        
+        load_path = os.path.join(self.ckpt_path, ckpt_name + ".pth")
+        checkpoint = torch.load(load_path, map_location="cpu", weights_only=True)
 
         model.load_state_dict(checkpoint["model"])
 
@@ -103,6 +113,7 @@ class Task():
             optimizer.load_state_dict(checkpoint["optimizer"])
         if scaler is not None and "scaler" in checkpoint:
             scaler.load_state_dict(checkpoint["scaler"])
+        self.args.ckpt_args = checkpoint.get("args", None)
 
         if verbose:
             print(f"Loaded checkpoint from {load_path}")

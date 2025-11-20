@@ -4,7 +4,7 @@ import torch
 import os
 import argparse
 
-from long_term_prediction import Long_Term_Forecast
+from long_term_forecasting import Long_Term_Forecasting
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -27,6 +27,8 @@ def str2dtype(v):
     else:
         raise ValueError(f"Unkown dtype {v}")
 
+def strLower(v):
+    return v.lower()
 
 def arg_parser():
     parser = argparse.ArgumentParser('Long Term Prediction', add_help=False)
@@ -36,7 +38,7 @@ def arg_parser():
                         help='seed')
     parser.add_argument('--precision', type=str2dtype, default=torch.float32,
                         help='Model data precision')
-    parser.add_argument('--batch_size', default=128, type=int,
+    parser.add_argument('--batch_size', default=32, type=int,
                         help='Batch size per GPU (effective batch size is batch_size * accum_iter * # gpus')
     parser.add_argument('--start_epoch', type=int, default=0,
                         help='starting epoch')
@@ -53,14 +55,19 @@ def arg_parser():
 
 
     # Model hyperparameters
-    parser.add_argument('--model', type=str, default='itransformer',
+    parser.add_argument('--model', type=strLower, default='itransformer',
                         help='Name of model to train')
-    parser.add_argument('--seq_len', type=int, default=32,
+    parser.add_argument('--seq_len', type=int, default=512,
                         help="Input sequence length (lookback window)")
     parser.add_argument('--label_len', type=int, default=16,
                         help="Decoder lookback window, no use for this project")
     parser.add_argument('--pred_len', type=int, default=16,
                         help="Model prediction length")
+    parser.add_argument('--forecast_len', type=int, default=96,
+                        help="Forecasting length for forecast")
+    parser.add_argument('--bootstrapping_step', type=int, default=1,
+                        help="How many steps are used for bootstrapping")
+
     parser.add_argument('--d_model', type=int, default=512,
                         help="Dimension of attention layer")
     parser.add_argument('--d_ff', type=int, default=512,
@@ -71,15 +78,15 @@ def arg_parser():
                         help="Number of Heads in MultiHead Attention")
     parser.add_argument('--dropout', type=float, default=0.2,
                         help="dropout probability")
-    parser.add_argument('--activation', type=str, default='relu',
+    parser.add_argument('--activation', type=strLower, default='relu',
                         help="Activation function of model")
     parser.add_argument('--e_layers', type=int, default=2,
                         help="Number of encoder layers")
     
 
     # Optimizer hyperparameters
-    parser.add_argument('--optimizer', type=str, default='AdamW',
-                        choices=['Adam', 'AdamW', 'SGD'],
+    parser.add_argument('--optimizer', type=strLower, default='adamw',
+                        choices=['adam', 'adamw', 'sgd'],
                         help='optimizer')
     parser.add_argument('--lr', type=float, default=3e-4, metavar='LR',
                         help='learning rate (absolute lr)')
@@ -89,7 +96,7 @@ def arg_parser():
                         help='lower lr bound for cyclic schedulers that hit 0')
     parser.add_argument('--betas', type=float, nargs=2, default=[0.9, 0.95], 
                         help='betas for Adam, AdamW')
-    parser.add_argument('--lr_scheduler', type=str, default='constant',
+    parser.add_argument('--lr_scheduler', type=strLower, default='constant',
                         help='Type of lr scheduler')
     parser.add_argument('--warmup_epochs', type=int, default=5, metavar='N',
                         help='epochs to warmup LR')
@@ -104,10 +111,21 @@ def arg_parser():
                         help="reslut saving path")
     parser.add_argument('--ckpt_path', default="checkpoints",
                         help="checkpoint saving path")
+    parser.add_argument('--ckpt_name', default="itransformer_e4_s512_p16",
+                        help="checkpoint name")
     
+    # Dataset parameters
+    parser.add_argument('--country', type=strLower, default="Canada",
+                        help="dataset country name")
+    parser.add_argument('--store', type=strLower, default="Discount_Stickers",
+                        help="dataset store name")
+
+
     # Others
-    parser.add_argument('--num_workers', default=8, type=int)
+    parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--verbose', type=str2bool, default=True)
+    parser.add_argument('--mode', type=str, default='train',
+                        choices=['train', 'test', 'pred'])
     
     return parser
 
@@ -115,6 +133,8 @@ if __name__ == "__main__":
     args = arg_parser()
     args = args.parse_args()
 
-    task = Long_Term_Forecast(args)
-    task.train()
+    task = Long_Term_Forecasting(args)
+    # task.train()
+    # task.test()
+    # task.forecast()
     
