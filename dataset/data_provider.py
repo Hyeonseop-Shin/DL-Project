@@ -33,7 +33,7 @@ class Dataset_Sticker(Dataset):
         self.set_type = type_map[flag]
         self.scale = scale
 
-        self.root_path = os.path.join(data_path, "Stickers")
+        self.root_path = os.path.join(data_path, "stickers_dataset")
         self.country = country
         self.store = store
 
