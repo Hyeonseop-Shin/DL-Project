@@ -82,6 +82,10 @@ def arg_parser():
                         help="Activation function of model")
     parser.add_argument('--e_layers', type=int, default=2,
                         help="Number of encoder layers")
+    parser.add_argument('--patch_len', type=int, default=16,
+                        help="Patch length for TimeXer encoder")
+    parser.add_argument('--use_norm', type=str2bool, default=True,
+                        help="Apply normalization before TimeXer encoder")
     
 
     # Optimizer hyperparameters

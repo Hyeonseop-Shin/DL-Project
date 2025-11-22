@@ -60,12 +60,12 @@ class Task():
     def _select_optimizer(self):
         assert self.model is not None, "Model is not defined"
 
-        optimizer_class = getattr(optim, self.args.optimizer)
-        if self.args.optimizer.lower() in ["adam", "adamw"]:
-            optimizer = optimizer_class(self.model.parameters(), lr=self.args.lr, betas=self.args.betas)
-        else:
-            optimizer = optimizer_class(self.model.parameters(), lr=self.args.lr)
-        
+        if self.args.optimizer == "sgd":
+            optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=0.9)
+        elif self.args.optimizer == "adam":
+            optimizer = optim.Adam(self.model.parameters(), lr=self.args.lr, betas=tuple(self.args.betas))
+        elif self.args.optimizer == "adamw":
+            optimizer = optim.AdamW(self.model.parameters(), lr=self.args.lr, betas=tuple(self.args.betas))
         return optimizer
     
     def _select_criterion(self):

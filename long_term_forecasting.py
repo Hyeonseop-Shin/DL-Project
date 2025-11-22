@@ -37,6 +37,19 @@ class Long_Term_Forecasting(Task):
                 activation=self.args.activation,
                 e_layers=self.args.e_layers
             )
+        elif model_name == 'timexer':
+            model = TimeXer(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                dropout=self.args.dropout,
+                n_heads=self.args.n_heads,
+                activation=self.args.activation,
+                e_layers=self.args.e_layers,
+                patch_len=self.args.patch_len,
+                use_norm=self.args.use_norm
+            )
         else:
             raise ValueError(f"Unknown model type {model_name}")
         
