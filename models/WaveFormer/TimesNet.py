@@ -119,8 +119,8 @@ class TimesNet(nn.Module):
     def __init__(self,
         seq_len=90,      # Input Sequence Length
         pred_len=30,     # Prediction Length
-        c_in=7,          # Number of Input Variables
-        c_out=7,         # Number of Output Variables (usually same as c_in)
+        c_in=5,          # Number of Input Variables
+        c_out=5,         # Number of Output Variables (usually same as c_in)
         d_model=64,      # Model Dimension
         d_ff=64,         # Hidden Size in Inception
         top_k=5,         # Number of Top Periods

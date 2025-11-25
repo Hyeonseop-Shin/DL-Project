@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 from dataset.data_provider import data_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
 from models import iTransformer, TimeXer, WaveFormer
+
 from models.WaveFormer.WaveNet import WaveNetForecaster
+from models.WaveFormer.TimesNet import TimesNet
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
@@ -43,11 +45,25 @@ class Long_Term_Forecasting(Task):
             model = WaveNetForecaster(
                 seq_len=self.args.seq_len,
                 pred_len=self.args.pred_len,
-                c_in=7,
+                c_in=self.args.input_dim,
                 d_model=self.args.d_model,
                 dropout=self.args.dropout,
-                layers=4,
-                kernel_size=3
+                layers=self.args.e_layers,
+                kernel_size=self.args.wave_kernel_size
+            )
+
+        elif model_name == 'timesnet':
+            model = TimesNet(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=self.args.input_dim,
+                c_out=self.args.input_dim,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                top_k=self.args.top_k,
+                num_kernels=self.args.time_inception,
+                e_layers=self.args.e_layers,
+                dropout=self.args.dropout
             )
 
         else:

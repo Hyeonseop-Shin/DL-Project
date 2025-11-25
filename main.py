@@ -83,6 +83,17 @@ def arg_parser():
     parser.add_argument('--e_layers', type=int, default=2,
                         help="Number of encoder layers")
     
+    # Hyperparameters for Wave-Block and Time-Block
+
+    parser.add_argument('--top_k', type=int, default=3,
+                        help="Number of peaks to focus on during FFT")
+    parser.add_argument('--wave_kernel_size', type=int, default=3,
+                        help="Kernel size of Wave-Block CNN")
+    parser.add_argument('--time_inception', type=int, default=5,
+                        help="Number of inception CNN in Time-Block")
+    parser.add_argument('--input_dim', type=int, default=5,
+                        help="Number of input variables")
+    
 
     # Optimizer hyperparameters
     parser.add_argument('--optimizer', type=strLower, default='adamw',
