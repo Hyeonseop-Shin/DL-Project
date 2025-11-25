@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from dataset.data_provider import data_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
 from models import iTransformer, TimeXer, WaveFormer
+from models.WaveFormer.WaveNet import WaveNetForecaster
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
@@ -37,6 +38,18 @@ class Long_Term_Forecasting(Task):
                 activation=self.args.activation,
                 e_layers=self.args.e_layers
             )
+
+        elif model_name == 'wavenet':
+            model = WaveNetForecaster(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=7,
+                d_model=self.args.d_model,
+                dropout=self.args.dropout,
+                layers=4,
+                kernel_size=3
+            )
+
         else:
             raise ValueError(f"Unknown model type {model_name}")
         
