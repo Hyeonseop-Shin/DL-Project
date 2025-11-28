@@ -54,37 +54,28 @@ class Dataset_Weather(Dataset):
                 city_name = korean_city_file.split('_')[0]
                 csv_path = os.path.join(self.root_path, korean_city_file)
                 df = pd.read_csv(csv_path)
-                df = df.rename(columns={col: f"{city_name}_{col}" for col in df.columns if col != "date"})
+                df = df.rename(columns={col: f"{city_name}_{col}" for col in df.columns if col != "time"})
                 dfs.append(df)
             df_raw = dfs[0]
             for df in dfs[1:]:
-                df_raw = df_raw.merge(df, on="date", how="inner")
+                df_raw = df_raw.merge(df, on="time", how="inner")
         else:
             df_raw = pd.read_csv(os.path.join(self.root_path, self.city + '_2020-2024' + '.csv'))
         
         max_len = len(df_raw)
         self.max_len = max_len
 
-        train_end = int(max_len * self.train_ratio)
+        training_length = max_len - self.seq_len - self.pred_len
+        train_end = int(training_length * self.train_ratio)
 
         border1s = [0,
-                    0, 
+                    train_end, 
                     train_end,
                     max_len - self.seq_len - self.forecast_len]
         border2s = [train_end,
-                    train_end,
-                    max_len - self.seq_len - self.pred_len,
+                    training_length,
+                    training_length,
                     max_len - self.forecast_len]
-        
-        # For prediction
-        # border1s = [0,
-        #             0, 
-        #             0,
-        #             max_len - self.seq_len - self.forecast_len]
-        # border2s = [max_len - self.seq_len - self.pred_len,
-        #             max_len - self.seq_len - self.pred_len,
-        #             max_len - self.seq_len - self.pred_len,
-        #             max_len - self.forecast_len]
         
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
@@ -97,12 +88,11 @@ class Dataset_Weather(Dataset):
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
             data = self.scaler.transform(df_data.values)
-            print(f"data mean: {data.mean(axis=0)} | data std: {data.std(axis=0)}")
         else:
             data = df_data.values
 
         df_raw['time'] = pd.to_datetime(df_raw['time'], errors='coerce')
-        df_weath = df_raw[['time']][border1:border2]
+        df_weath = df_raw[['time']][border1:border2+self.seq_len+self.pred_len]
         df_weath['year']   = df_weath['time'].dt.year
         df_weath['month']  = df_weath['time'].dt.month
         df_weath['day']    = df_weath['time'].dt.day
@@ -111,15 +101,16 @@ class Dataset_Weather(Dataset):
         df_weath['second'] = df_weath['time'].dt.second
         data_weath = df_weath.drop(['time'], axis=1).values
 
-        self.data_x = data[border1:border2]
-        self.data_y = data[border1:border2]
-        self.data_weath = data_weath    
+        self.data_x = data[border1:border2 + self.seq_len]
+        self.data_y = data[border1 + self.seq_len:border2 + self.seq_len + self.pred_len]
+        self.data_weath = data_weath
+        print(f"{self.flag} data length: {len(self.data_x) - self.seq_len + 1}") 
 
     def __len__(self):
         if self.flag == 'forecast':
             return len(self.data_x) - self.seq_len + 1
         else:
-            return len(self.data_x) - self.seq_len - self.pred_len + 1
+            return len(self.data_x) - self.seq_len + 1
 
     def __getitem__(self, index):
         s_begin = index
@@ -131,7 +122,7 @@ class Dataset_Weather(Dataset):
         seq_x = self.data_x[s_begin:s_end]
         seq_x_mark = self.data_weath[s_begin:s_end]
 
-        seq_y = self.data_y[r_begin:r_end]
+        seq_y = self.data_y[s_begin:s_begin + self.pred_len]
         seq_y_mark = self.data_weath[r_begin:r_end]
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
