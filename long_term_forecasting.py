@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from dataset.data_provider import data_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
-from models import iTransformer, TimeXer, WaveFormer, WaveNetForecaster, TimesNet, TimesFormer, WaTiFormer_Unified
+from models import iTransformer, TimeXer, WaveFormer, WaveNet, TimesNet, TimesFormer, WaTiFormer_Unified
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
@@ -51,7 +51,7 @@ class Long_Term_Forecasting(Task):
                 use_norm=self.args.use_norm
             )
         elif model_name == 'wavenet':
-            model = WaveNetForecaster(
+            model = WaveNet(
                 seq_len=self.args.seq_len,
                 pred_len=self.args.pred_len,
                 c_in=self.args.input_dim,
@@ -121,16 +121,18 @@ class Long_Term_Forecasting(Task):
     def _get_data_loader(self, flag='train'):
         self.args.country = self.args.country.lower()
         self.args.store = self.args.store.lower()
-        dataset, dataloader = data_provider(data_path=self.data_path,
-                                            country=self.args.country,
-                                            store=self.args.store,
-                                            seq_len=self.args.seq_len,
-                                            label_len=self.args.label_len,
-                                            pred_len=self.args.pred_len,
-                                            forecast_len=self.args.forecast_len,
-                                            num_workers=self.args.num_workers,
-                                            batch_size=self.args.batch_size,
-                                            flag=flag)
+        dataset, dataloader = data_provider(
+                data_path=self.data_path,
+                country=self.args.country,
+                store=self.args.store,
+                seq_len=self.args.seq_len,
+                label_len=self.args.label_len,
+                pred_len=self.args.pred_len,
+                forecast_len=self.args.forecast_len,
+                num_workers=self.args.num_workers,
+                batch_size=self.args.batch_size,
+                flag=flag)
+            
         return dataset, dataloader
 
 

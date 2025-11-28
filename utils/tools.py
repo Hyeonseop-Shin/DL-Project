@@ -22,9 +22,8 @@ def save_test_result(metrics, training_args, ckpt_name, result_path):
         f.write(f"CORR: {corr}\n")
 
         f.write("\n===== Training Arguments =====\n")
-        for key in vars(training_args):
-            if hasattr(training_args, key):
-                f.write(f"{key}: {getattr(training_args, key)}\n")
+        for key, value in training_args.items():
+            f.write(f"{key}: {value}\n")
 
 class EarlyStopping:
     def __init__(self, patience=3, verbose=False, delta=0):
