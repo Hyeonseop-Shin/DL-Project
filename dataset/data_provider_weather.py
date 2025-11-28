@@ -78,7 +78,7 @@ class Dataset_Weather(Dataset):
         border2s = [train_end,
                     training_length,
                     training_length,
-                    max_len - self.forecast_len]
+                    max_len - self.seq_len - self.forecast_len]
         
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
