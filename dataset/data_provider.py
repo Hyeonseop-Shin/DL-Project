@@ -65,26 +65,18 @@ class Dataset_Sticker(Dataset):
         max_len = len(df_raw)   # 2557
         self.max_len = max_len
 
-        train_end = int(max_len * self.train_ratio)
+        training_length = max_len - self.seq_len - self.pred_len
+        train_end = int(training_length * self.train_ratio)
 
         border1s = [0,
-                    0, 
+                    train_end, 
                     train_end,
                     max_len - self.seq_len - self.forecast_len]
         border2s = [train_end,
-                    train_end,
-                    max_len - self.seq_len - self.pred_len,
+                    training_length,
+                    training_length,
                     max_len - self.forecast_len]
         
-        # For prediction
-        # border1s = [0,
-        #             0, 
-        #             0,
-        #             max_len - self.seq_len - self.forecast_len]
-        # border2s = [max_len - self.seq_len - self.pred_len,
-        #             max_len - self.seq_len - self.pred_len,
-        #             max_len - self.seq_len - self.pred_len,
-        #             max_len - self.forecast_len]
         
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
@@ -99,24 +91,26 @@ class Dataset_Sticker(Dataset):
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
+        self.data = data
 
-        df_stamp = df_raw[['date']][border1:border2]
+        df_stamp = df_raw[['date']][border1:border2+self.seq_len+self.pred_len]
 
         df_stamp['year'] = df_stamp.apply(lambda row: int(row['date'].split('-')[0]), 1)
         df_stamp['month'] = df_stamp.apply(lambda row: int(row['date'].split('-')[1]), 1)
         df_stamp['day'] = df_stamp.apply(lambda row: int(row['date'].split('-')[2]), 1)
         data_stamp = df_stamp.drop(['date'], axis=1).values
 
-        self.data_x = data[border1:border2]
-        self.data_y = data[border1:border2]
+        self.data_x = data[border1:border2 + self.seq_len]
+        self.data_y = data[border1 + self.seq_len:border2 + self.seq_len + self.pred_len]
         self.data_stamp = data_stamp
-        print(f"{self.flag} data length: {len(self.data_x)}")
+        print(f"{self.flag} data length: {len(self.data_x) - self.seq_len + 1}")
 
     def __len__(self):
         if self.flag == 'forecast':
             return len(self.data_x) - self.seq_len + 1
         else:
-            return len(self.data_x) - self.seq_len - self.pred_len + 1
+            length = len(self.data_x) - self.seq_len + 1
+            return length
 
     def __getitem__(self, index):
         s_begin = index
@@ -128,7 +122,7 @@ class Dataset_Sticker(Dataset):
         seq_x = self.data_x[s_begin:s_end]
         seq_x_mark = self.data_stamp[s_begin:s_end]
 
-        seq_y = self.data_y[r_begin:r_end]
+        seq_y = self.data_y[s_begin:s_begin + self.pred_len]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark

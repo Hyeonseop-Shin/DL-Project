@@ -52,12 +52,12 @@ def arg_parser():
                         help='device to use for training / testing')
     parser.add_argument('--gpu_num', type=int, default=0,
                         help='GPU num to use')
-    parser.add_argument('--val', type=str2bool, default=False,
+    parser.add_argument('--val', type=str2bool, default=True,
                         help='Whether to use validation during training')
 
 
     # Model hyperparameters
-    parser.add_argument('--model', type=strLower, default='itransformer',
+    parser.add_argument('--model', type=strLower, default='watiformer',
                         help='Name of model to train')
     parser.add_argument('--seq_len', type=int, default=512,
                         help="Input sequence length (lookback window)")
@@ -70,19 +70,19 @@ def arg_parser():
     parser.add_argument('--bootstrapping_step', type=int, default=1,
                         help="How many steps are used for bootstrapping")
 
-    parser.add_argument('--d_model', type=int, default=512,
+    parser.add_argument('--d_model', type=int, default=128,
                         help="Dimension of attention layer")
-    parser.add_argument('--d_ff', type=int, default=512,
+    parser.add_argument('--d_ff', type=int, default=128,
                         help="Dimension of feed forward network")
     parser.add_argument('--scale_factor', type=int, default=1,
                         help="Scaling factor of Transformer")
-    parser.add_argument('--n_heads', type=int, default=8,
+    parser.add_argument('--n_heads', type=int, default=4,
                         help="Number of Heads in MultiHead Attention")
     parser.add_argument('--dropout', type=float, default=0.2,
                         help="dropout probability")
     parser.add_argument('--activation', type=strLower, default='relu',
                         help="Activation function of model")
-    parser.add_argument('--e_layers', type=int, default=2,
+    parser.add_argument('--e_layers', type=int, default=3,
                         help="Number of encoder layers")
     
     # TimeXer hyperparameters
@@ -92,13 +92,13 @@ def arg_parser():
                         help="Apply normalization before TimeXer encoder")
     
     # WaveFormer hyperparameters
-    parser.add_argument('--top_k', type=int, default=3,
+    parser.add_argument('--top_k', type=int, default=2,
                         help="Number of peaks to focus on during FFT")
     parser.add_argument('--wave_kernel_size', type=int, default=3,
                         help="Kernel size of Wave-Block CNN")
     parser.add_argument('--time_inception', type=int, default=5,
                         help="Number of inception CNN in Time-Block")
-    parser.add_argument('--input_dim', type=int, default=5,
+    parser.add_argument('--input_dim', type=int, default=15,
                         help="Number of input variables")
 
     # Optimizer hyperparameters
@@ -144,7 +144,7 @@ def arg_parser():
                         help="train dataset ratio")
 
     # Others
-    parser.add_argument('--num_workers', type=int, default=8)
+    parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--verbose', type=str2bool, default=True)
     parser.add_argument('--mode', type=str, default='train',
                         choices=['train', 'test', 'forecast'])
