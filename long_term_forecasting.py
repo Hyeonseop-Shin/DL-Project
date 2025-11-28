@@ -8,7 +8,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dataset.data_provider import data_provider
+from dataset import weather_provider, sticker_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
 from models import iTransformer, TimeXer, WaveFormer, WaveNet, TimesNet, TimesFormer, WaTiFormer_Unified
 
@@ -121,7 +121,9 @@ class Long_Term_Forecasting(Task):
     def _get_data_loader(self, flag='train'):
         self.args.country = self.args.country.lower()
         self.args.store = self.args.store.lower()
-        dataset, dataloader = data_provider(
+
+        if self.args.dataset.lower() == 'sticker':
+            dataset, dataloader = sticker_provider(
                 data_path=self.data_path,
                 country=self.args.country,
                 store=self.args.store,
@@ -130,7 +132,20 @@ class Long_Term_Forecasting(Task):
                 pred_len=self.args.pred_len,
                 forecast_len=self.args.forecast_len,
                 num_workers=self.args.num_workers,
-                batch_size=self.args.batch_size,
+                batch_size=self.args.batch_size if flag=='train' else 1,
+                train_ratio=self.args.train_ratio,
+                flag=flag)
+        elif self.args.dataset.lower() == 'weather':
+            dataset, dataloader = weather_provider(
+                data_path=self.data_path,
+                city=self.args.city,
+                seq_len=self.args.seq_len,
+                label_len=self.args.label_len,
+                pred_len=self.args.pred_len,
+                forecast_len=self.args.forecast_len,
+                num_workers=self.args.num_workers,
+                batch_size=self.args.batch_size if flag=='train' else 1,
+                train_ratio=self.args.train_ratio,
                 flag=flag)
             
         return dataset, dataloader
@@ -193,8 +208,9 @@ class Long_Term_Forecasting(Task):
                 f"Epoch: [{epoch:3d}/{last_epoch:3d}]  "
                 f"Train Loss: {train_loss:.5f}\t"
                 f"Train Time: {train_time:.3f}s\t"
-                f"Val Loss: {val_loss:.5f}\tVal Time: {val_time:.3f}s" if val else ""
                 )
+            if val:
+                log += f"Val Loss: {val_loss:.5f}\tVal Time: {val_time:.3f}s"
             print(log)
 
             curr_loss = val_loss if val else train_loss

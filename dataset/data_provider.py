@@ -14,6 +14,7 @@ class Dataset_Sticker(Dataset):
                  data_path='dataset',
                  seq_size=None, # (seq_len, label_len, pred_len)
                  scale: bool=True,
+                 train_ratio=0.7,
                  flag='train'):
         self.flag = flag.lower()
 
@@ -35,39 +36,55 @@ class Dataset_Sticker(Dataset):
 
         self.root_path = os.path.join(data_path, "stickers_dataset")
         self.country = country
-        self.store = store
+        self.store_type = store
+        self.train_ratio = train_ratio
 
 
         self.__read_data__()
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path, self.country, self.store) + '.csv')
+
+        store_list = ("discount_stickers", "premium_sticker_mart", "stickers_for_less")
+        if self.store_type == 'all':
+            dfs = []
+            for store in store_list:
+                csv_path = os.path.join(self.root_path, self.country, store + ".csv")
+                df = pd.read_csv(csv_path)
+                df = df.rename(columns={col: f"{store}_{col}" for col in df.columns if col != "date"})
+                dfs.append(df)
+            df_raw = dfs[0]
+            for df in dfs[1:]:
+                df_raw = df_raw.merge(df, on="date", how="inner")
+        elif self.store_type in store_list:
+            csv_path = os.path.join(self.root_path, self.country, self.store_type + ".csv")
+            df_raw = pd.read_csv(csv_path)
+        else:
+            raise ValueError(f"Invalid store type: {self.store_type}")
         
         max_len = len(df_raw)   # 2557
         self.max_len = max_len
 
-        train_end = int(max_len * 0.7)
-        val_end = int(max_len * 0.85)
+        train_end = int(max_len * self.train_ratio)
 
-        # border1s = [0,
-        #             train_end, 
-        #             val_end,
-        #             max_len - self.seq_len - self.forecast_len]
-        # border2s = [train_end,
-        #             val_end,
-        #             max_len,
-        #             max_len - self.forecast_len]
-        
-        # For prediction
         border1s = [0,
                     0, 
-                    0,
+                    train_end,
                     max_len - self.seq_len - self.forecast_len]
-        border2s = [max_len - self.seq_len - self.pred_len,
-                    max_len - self.seq_len - self.pred_len,
+        border2s = [train_end,
+                    train_end,
                     max_len - self.seq_len - self.pred_len,
                     max_len - self.forecast_len]
+        
+        # For prediction
+        # border1s = [0,
+        #             0, 
+        #             0,
+        #             max_len - self.seq_len - self.forecast_len]
+        # border2s = [max_len - self.seq_len - self.pred_len,
+        #             max_len - self.seq_len - self.pred_len,
+        #             max_len - self.seq_len - self.pred_len,
+        #             max_len - self.forecast_len]
         
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
@@ -92,7 +109,8 @@ class Dataset_Sticker(Dataset):
 
         self.data_x = data[border1:border2]
         self.data_y = data[border1:border2]
-        self.data_stamp = data_stamp    
+        self.data_stamp = data_stamp
+        print(f"{self.flag} data length: {len(self.data_x)}")
 
     def __len__(self):
         if self.flag == 'forecast':
@@ -140,6 +158,7 @@ def data_provider(data_path,
                   label_len,
                   pred_len,
                   forecast_len,
+                  train_ratio=0.7,
                   batch_size=16,
                   num_workers=2,
                   drop_last=False,
@@ -155,6 +174,7 @@ def data_provider(data_path,
                               store=store,
                               seq_size=[seq_len, label_len, pred_len, forecast_len],
                               scale=scale,
+                              train_ratio=train_ratio,
                               flag=flag)
     
     dataloader = DataLoader(dataset=dataset,

@@ -12,8 +12,8 @@ class Dataset_Weather(Dataset):
                  data_path='dataset',
                  seq_size=None, # (seq_len, label_len, pred_len, forecast_len)
                  scale: bool=True,
-                 flag='train',
-                 is_global=False):
+                 train_ratio=0.7,
+                 flag='train'):
         self.flag = flag.lower()
 
         if seq_size == None:
@@ -31,45 +31,60 @@ class Dataset_Weather(Dataset):
         type_map = {'train': 0, 'val': 1, 'test': 2, 'forecast': 3}
         self.set_type = type_map[flag]
         self.scale = scale
-        self.is_global = is_global
 
-        if self.is_global:
+        self.global_cities = ('berlin', 'la', 'newyork', 'tokyo')
+        self.korean_cities = ('seoul', 'busan', 'daegu', 'gangneung', 'gwangju')
+        if city in self.global_cities:
             self.root_path = os.path.join(data_path, "weather_dataset_global")
-        else:
+        elif city in self.korean_cities or city == 'korea':
             self.root_path = os.path.join(data_path, "weather_dataset_korea")
+        else:
+            raise ValueError(f"City {city} not recognized.")
 
         self.city = city
+        self.train_ratio = train_ratio
 
         self.__read_data__()
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path, self.city) + '_2020-2024' + '.csv')
+        if self.city == 'korea':
+            dfs = []
+            for korean_city_file in os.listdir(self.root_path):
+                city_name = korean_city_file.split('_')[0]
+                csv_path = os.path.join(self.root_path, korean_city_file)
+                df = pd.read_csv(csv_path)
+                df = df.rename(columns={col: f"{city_name}_{col}" for col in df.columns if col != "date"})
+                dfs.append(df)
+            df_raw = dfs[0]
+            for df in dfs[1:]:
+                df_raw = df_raw.merge(df, on="date", how="inner")
+        else:
+            df_raw = pd.read_csv(os.path.join(self.root_path, self.city + '_2020-2024' + '.csv'))
         
         max_len = len(df_raw)
         self.max_len = max_len
 
-        train_end = int(max_len * 0.7)
-        val_end = int(max_len * 0.85)
+        train_end = int(max_len * self.train_ratio)
 
-        # border1s = [0,
-        #             train_end, 
-        #             val_end,
-        #             max_len - self.seq_len - self.forecast_len]
-        # border2s = [train_end,
-        #             val_end,
-        #             max_len,
-        #             max_len - self.forecast_len]
-        
-        # For prediction
         border1s = [0,
                     0, 
-                    0,
+                    train_end,
                     max_len - self.seq_len - self.forecast_len]
-        border2s = [max_len - self.seq_len - self.pred_len,
-                    max_len - self.seq_len - self.pred_len,
+        border2s = [train_end,
+                    train_end,
                     max_len - self.seq_len - self.pred_len,
                     max_len - self.forecast_len]
+        
+        # For prediction
+        # border1s = [0,
+        #             0, 
+        #             0,
+        #             max_len - self.seq_len - self.forecast_len]
+        # border2s = [max_len - self.seq_len - self.pred_len,
+        #             max_len - self.seq_len - self.pred_len,
+        #             max_len - self.seq_len - self.pred_len,
+        #             max_len - self.forecast_len]
         
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
@@ -82,9 +97,11 @@ class Dataset_Weather(Dataset):
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
             data = self.scaler.transform(df_data.values)
+            print(f"data mean: {data.mean(axis=0)} | data std: {data.std(axis=0)}")
         else:
             data = df_data.values
 
+        df_raw['time'] = pd.to_datetime(df_raw['time'], errors='coerce')
         df_weath = df_raw[['time']][border1:border2]
         df_weath['year']   = df_weath['time'].dt.year
         df_weath['month']  = df_weath['time'].dt.month
@@ -140,10 +157,10 @@ class Dataset_Weather(Dataset):
 def data_provider_weather(data_path,
                   city,
                   seq_len,
-                  is_global,
                   label_len = None,
                   pred_len= None,
                   forecast_len = None,
+                  train_ratio=0.7,
                   batch_size=16,
                   num_workers=2,
                   drop_last=False,
@@ -158,8 +175,8 @@ def data_provider_weather(data_path,
                               city=city,
                               seq_size=[seq_len, label_len, pred_len, forecast_len],
                               scale=scale,
+                              train_ratio=train_ratio,
                               flag=flag,
-                              is_global=is_global
                               )
     
     dataloader = DataLoader(dataset=dataset,

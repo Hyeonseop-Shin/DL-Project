@@ -52,6 +52,8 @@ def arg_parser():
                         help='device to use for training / testing')
     parser.add_argument('--gpu_num', type=int, default=0,
                         help='GPU num to use')
+    parser.add_argument('--val', type=str2bool, default=False,
+                        help='Whether to use validation during training')
 
 
     # Model hyperparameters
@@ -130,11 +132,16 @@ def arg_parser():
                         help="checkpoint name")
     
     # Dataset parameters
-    parser.add_argument('--country', type=strLower, default="Canada",
+    parser.add_argument('--dataset', type=strLower, default='sticker',
+                        help='dataset type')
+    parser.add_argument('--country', type=strLower, default="canada",
                         help="dataset country name")
-    parser.add_argument('--store', type=strLower, default="Discount_Stickers",
+    parser.add_argument('--store', type=strLower, default="all",
                         help="dataset store name")
-
+    parser.add_argument('--city', type=strLower, default="seoul",
+                        help="dataset city name")
+    parser.add_argument('--train_ratio', type=float, default=0.8,
+                        help="train dataset ratio")
 
     # Others
     parser.add_argument('--num_workers', type=int, default=8)
@@ -150,7 +157,7 @@ if __name__ == "__main__":
 
     task = Long_Term_Forecasting(args)
     if args.mode == 'train':
-        task.train()
+        task.train(val=args.val)
     elif args.mode == 'test':
         task.test()
     elif args.mode == 'forecast':
