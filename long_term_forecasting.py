@@ -109,7 +109,7 @@ class Long_Term_Forecasting(Task):
                 d_ff=self.args.d_ff,
                 n_layers=self.args.e_layers,
                 top_k=self.args.top_k,
-                num_kernels=4, # TimesBlock Inception kernel num
+                num_kernels=self.args.time_inception, # TimesBlock Inception kernel num
                 n_heads=self.args.n_heads,
                 dropout=self.args.dropout,
             )
@@ -153,6 +153,7 @@ class Long_Term_Forecasting(Task):
 
     def train(self, val=True):
         print("Start training...")
+        self.count_parameters()
         _, train_loader = self._get_data_loader(flag='train')
         if val:
             _, val_loader = self._get_data_loader(flag='val')

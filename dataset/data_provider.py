@@ -91,7 +91,6 @@ class Dataset_Sticker(Dataset):
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
-        self.data = data
 
         df_stamp = df_raw[['date']][border1:border2+self.seq_len+self.pred_len]
 

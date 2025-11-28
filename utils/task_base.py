@@ -52,7 +52,7 @@ class Task():
 
     def _get_device(self):
         if self.args.device.lower() == 'cuda' and torch.cuda.is_available():
-            device = torch.device(f'cuda:{getattr(self.args, 'gpu_num', 0)}')
+            device = torch.device(f"cuda:{getattr(self.args, 'gpu_num', 0)}")
         else:
             device = torch.device('cpu')
         return device
