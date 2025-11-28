@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from dataset.data_provider import data_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
-from models import iTransformer, TimeXer, WaveFormer
+from models import iTransformer, TimeXer, WaveFormer, WaveNetForecaster, TimesNet, TimesFormer, WaTiFormer_Unified
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
@@ -36,6 +36,82 @@ class Long_Term_Forecasting(Task):
                 n_heads=self.args.n_heads,
                 activation=self.args.activation,
                 e_layers=self.args.e_layers
+            )
+        elif model_name == 'timexer':
+            model = TimeXer(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                dropout=self.args.dropout,
+                n_heads=self.args.n_heads,
+                activation=self.args.activation,
+                e_layers=self.args.e_layers,
+                patch_len=self.args.patch_len,
+                use_norm=self.args.use_norm
+            )
+        elif model_name == 'wavenet':
+            model = WaveNetForecaster(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=self.args.input_dim,
+                d_model=self.args.d_model,
+                dropout=self.args.dropout,
+                layers=self.args.e_layers,
+                kernel_size=self.args.wave_kernel_size
+            )
+        elif model_name == 'timesnet':
+            model = TimesNet(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=self.args.input_dim,
+                c_out=self.args.input_dim,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                top_k=self.args.top_k,
+                num_kernels=self.args.time_inception,
+                e_layers=self.args.e_layers,
+                dropout=self.args.dropout
+            )
+        elif model_name == 'waveformer':
+            model = WaveFormer(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=self.args.input_dim,
+                d_model=self.args.d_model,
+                n_heads=self.args.n_heads,
+                d_ff=self.args.d_ff,
+                dropout=self.args.dropout,
+                wave_layers=4,   # Number of WaveNet Blocks
+                trans_layers=2,  # Number of Transformer Layers
+                kernel_size=self.args.wave_kernel_size
+            )
+        elif model_name == 'timesformer':
+            model = TimesFormer(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                c_in=self.args.input_dim,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                top_k=self.args.top_k,
+                num_kernels=self.args.time_inception,
+                times_layers=2,  # Number of TimesBlocks
+                trans_layers=2,  # Number of Transformer Layers
+                n_heads=self.args.n_heads,
+                dropout=self.args.dropout,
+            )
+        elif model_name == 'watiformer':
+            model = WaTiFormer_Unified(
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len, 
+                c_in=self.args.input_dim,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                n_layers=self.args.e_layers,
+                top_k=self.args.top_k,
+                num_kernels=4, # TimesBlock Inception kernel num
+                n_heads=self.args.n_heads,
+                dropout=self.args.dropout,
             )
         else:
             raise ValueError(f"Unknown model type {model_name}")

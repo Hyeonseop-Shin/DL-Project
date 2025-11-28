@@ -83,6 +83,21 @@ def arg_parser():
     parser.add_argument('--e_layers', type=int, default=2,
                         help="Number of encoder layers")
     
+    # TimeXer hyperparameters
+    parser.add_argument('--patch_len', type=int, default=16,
+                        help="Patch length for TimeXer encoder")
+    parser.add_argument('--use_norm', type=str2bool, default=True,
+                        help="Apply normalization before TimeXer encoder")
+    
+    # WaveFormer hyperparameters
+    parser.add_argument('--top_k', type=int, default=3,
+                        help="Number of peaks to focus on during FFT")
+    parser.add_argument('--wave_kernel_size', type=int, default=3,
+                        help="Kernel size of Wave-Block CNN")
+    parser.add_argument('--time_inception', type=int, default=5,
+                        help="Number of inception CNN in Time-Block")
+    parser.add_argument('--input_dim', type=int, default=5,
+                        help="Number of input variables")
 
     # Optimizer hyperparameters
     parser.add_argument('--optimizer', type=strLower, default='adamw',
@@ -125,7 +140,7 @@ def arg_parser():
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--verbose', type=str2bool, default=True)
     parser.add_argument('--mode', type=str, default='train',
-                        choices=['train', 'test', 'pred'])
+                        choices=['train', 'test', 'forecast'])
     
     return parser
 
@@ -134,7 +149,10 @@ if __name__ == "__main__":
     args = args.parse_args()
 
     task = Long_Term_Forecasting(args)
-    # task.train()
-    # task.test()
-    # task.forecast()
+    if args.mode == 'train':
+        task.train()
+    elif args.mode == 'test':
+        task.test()
+    elif args.mode == 'forecast':
+        task.forecast()
     
