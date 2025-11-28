@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from dataset import weather_provider, sticker_provider
 from engine_forecasting import train_one_epoch, evaluate, forecasting
-from models import iTransformer, TimeXer, WaveFormer, WaveNet, TimesNet, TimesFormer, WaTiFormer_Unified
+from models import iTransformer, TimeXer, WaveFormer, WaveNet, TimesNet, TimesFormer, WaTiFormer_Unified, TimeXerWithWaveNet, TimeXerWithTimesNet, TimeXerWithHybridFeatures
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
@@ -113,6 +113,73 @@ class Long_Term_Forecasting(Task):
                 n_heads=self.args.n_heads,
                 dropout=self.args.dropout,
             )
+
+        elif model_name == 'waxer':
+            model = TimeXerWithWaveNet(
+                # --- TimeXer Standard Args ---
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                dropout=self.args.dropout,
+                n_heads=self.args.n_heads,
+                e_layers=self.args.e_layers,
+                patch_len=self.args.patch_len,
+                use_norm=self.args.use_norm,
+                
+                # --- WaveNet Specific Args ---
+                # enc_in: 데이터셋의 변수 개수 (Input Channel)
+                wavenet_c_in=self.args.input_dim,  
+                # wavenet_d_model: WaveNet 내부의 Residual Channel 크기
+                wavenet_d_model=self.args.wavenet_d_model, 
+                # wavenet_layers: WaveNet의 층 깊이 (Receptive Field 결정)
+                wavenet_layers=self.args.wavenet_layers 
+            )
+
+        elif model_name == 'timexer_timesnet':
+            model = TimeXerWithTimesNet(
+                # TimeXer Args
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                d_model=self.args.d_model,
+                e_layers=self.args.e_layers,
+                # ... (기타 TimeXer args)
+
+                # TimesNet Args (Feature Extractor용)
+                times_c_in=self.args.input_dim,            # 데이터셋의 변수 개수 (기존 args.enc_in 사용)
+                times_d_model=self.args.times_d_model,  # TimesNet 내부 차원
+                times_d_ff=self.args.times_d_ff,        # Inception 블록 내부 차원
+                times_top_k=self.args.times_top_k,      # 주요 주기(Period) 개수
+                times_num_kernels=self.args.times_num_kernels, # 커널 개수
+                times_layers=self.args.times_layers     # Feature Extractor 층 수
+            )
+
+        elif model_name == 'timexer_hybrid':
+            model = TimeXerWithHybridFeatures(
+                # TimeXer
+                seq_len=self.args.seq_len,
+                pred_len=self.args.pred_len,
+                d_model=self.args.d_model,
+                d_ff=self.args.d_ff,
+                dropout=self.args.dropout,
+                n_heads=self.args.n_heads,
+                e_layers=self.args.e_layers,
+                patch_len=self.args.patch_len,
+                use_norm=self.args.use_norm,
+                
+                # WaveNet
+                wavenet_c_in=self.args.input_dim,
+                wavenet_d_model=self.args.wavenet_d_model,
+                wavenet_layers=self.args.wavenet_layers,
+                
+                # TimesNet
+                times_d_model=self.args.times_d_model,
+                times_d_ff=self.args.times_d_ff,
+                times_top_k=self.args.times_top_k,
+                times_num_kernels=self.args.times_num_kernels,
+                times_layers=self.args.times_layers
+            )
+
         else:
             raise ValueError(f"Unknown model type {model_name}")
         

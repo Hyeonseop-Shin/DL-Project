@@ -100,6 +100,17 @@ def arg_parser():
                         help="Number of inception CNN in Time-Block")
     parser.add_argument('--input_dim', type=int, default=30,
                         help="Number of input variables")
+    
+    # WaXer hyperparameters
+    parser.add_argument('--wavenet_d_model', type=int, default=64, help='dimension of wavenet hidden states')
+    parser.add_argument('--wavenet_layers', type=int, default=3, help='num of wavenet layers')
+
+    # TimesNet hyperparameters
+    parser.add_argument('--times_d_model', type=int, default=64, help='dimension of timesnet hidden states')
+    parser.add_argument('--times_d_ff', type=int, default=64, help='dimension of timesnet fcn (inception block)')
+    parser.add_argument('--times_top_k', type=int, default=3, help='number of top k periods in timesnet')
+    parser.add_argument('--times_num_kernels', type=int, default=4, help='number of inception kernels in timesnet')
+    parser.add_argument('--times_layers', type=int, default=2, help='num of timesnet layers used for extraction')
 
     # Optimizer hyperparameters
     parser.add_argument('--optimizer', type=strLower, default='adamw',
@@ -142,7 +153,7 @@ def arg_parser():
                         help="dataset city name")
     parser.add_argument('--train_ratio', type=float, default=0.8,
                         help="train dataset ratio")
-    parser.add_argument('--sample_rate', type=int, default=6,
+    parser.add_argument('--sample_rate', type=int, default=8,
                         help="data sampling rate")
 
     # Others
