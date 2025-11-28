@@ -13,6 +13,7 @@ class Dataset_Weather(Dataset):
                  seq_size=None, # (seq_len, label_len, pred_len, forecast_len)
                  scale: bool=True,
                  train_ratio=0.7,
+                 sample_rate=1,
                  flag='train'):
         self.flag = flag.lower()
 
@@ -43,6 +44,7 @@ class Dataset_Weather(Dataset):
 
         self.city = city
         self.train_ratio = train_ratio
+        self.sample_rate = sample_rate
 
         self.__read_data__()
 
@@ -62,6 +64,7 @@ class Dataset_Weather(Dataset):
         else:
             df_raw = pd.read_csv(os.path.join(self.root_path, self.city + '_2020-2024' + '.csv'))
         
+        df_raw = df_raw[::self.sample_rate]
         max_len = len(df_raw)
         self.max_len = max_len
 
@@ -156,6 +159,7 @@ def data_provider_weather(data_path,
                   num_workers=2,
                   drop_last=False,
                   scale=True,
+                  sample_rate=1,
                   flag='train'):
 
     flag = flag.lower()
@@ -167,6 +171,7 @@ def data_provider_weather(data_path,
                               seq_size=[seq_len, label_len, pred_len, forecast_len],
                               scale=scale,
                               train_ratio=train_ratio,
+                              sample_rate=sample_rate,
                               flag=flag,
                               )
     

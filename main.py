@@ -70,19 +70,19 @@ def arg_parser():
     parser.add_argument('--bootstrapping_step', type=int, default=1,
                         help="How many steps are used for bootstrapping")
 
-    parser.add_argument('--d_model', type=int, default=128,
+    parser.add_argument('--d_model', type=int, default=32,
                         help="Dimension of attention layer")
-    parser.add_argument('--d_ff', type=int, default=128,
+    parser.add_argument('--d_ff', type=int, default=32,
                         help="Dimension of feed forward network")
     parser.add_argument('--scale_factor', type=int, default=1,
                         help="Scaling factor of Transformer")
-    parser.add_argument('--n_heads', type=int, default=4,
+    parser.add_argument('--n_heads', type=int, default=1,
                         help="Number of Heads in MultiHead Attention")
     parser.add_argument('--dropout', type=float, default=0.2,
                         help="dropout probability")
     parser.add_argument('--activation', type=strLower, default='relu',
                         help="Activation function of model")
-    parser.add_argument('--e_layers', type=int, default=3,
+    parser.add_argument('--e_layers', type=int, default=1,
                         help="Number of encoder layers")
     
     # TimeXer hyperparameters
@@ -98,7 +98,7 @@ def arg_parser():
                         help="Kernel size of Wave-Block CNN")
     parser.add_argument('--time_inception', type=int, default=5,
                         help="Number of inception CNN in Time-Block")
-    parser.add_argument('--input_dim', type=int, default=15,
+    parser.add_argument('--input_dim', type=int, default=30,
                         help="Number of input variables")
 
     # Optimizer hyperparameters
@@ -132,16 +132,18 @@ def arg_parser():
                         help="checkpoint name")
     
     # Dataset parameters
-    parser.add_argument('--dataset', type=strLower, default='sticker',
+    parser.add_argument('--dataset', type=strLower, default='weather',
                         help='dataset type')
     parser.add_argument('--country', type=strLower, default="canada",
                         help="dataset country name")
     parser.add_argument('--store', type=strLower, default="all",
                         help="dataset store name")
-    parser.add_argument('--city', type=strLower, default="seoul",
+    parser.add_argument('--city', type=strLower, default="korea",
                         help="dataset city name")
     parser.add_argument('--train_ratio', type=float, default=0.8,
                         help="train dataset ratio")
+    parser.add_argument('--sample_rate', type=int, default=6,
+                        help="data sampling rate")
 
     # Others
     parser.add_argument('--num_workers', type=int, default=0)

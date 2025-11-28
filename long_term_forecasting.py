@@ -146,6 +146,7 @@ class Long_Term_Forecasting(Task):
                 num_workers=self.args.num_workers,
                 batch_size=self.args.batch_size if flag=='train' else 1,
                 train_ratio=self.args.train_ratio,
+                sample_rate=self.args.sample_rate,
                 flag=flag)
             
         return dataset, dataloader
