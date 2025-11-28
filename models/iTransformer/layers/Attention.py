@@ -26,7 +26,7 @@ class FullAttention(nn.Module):
         attn_scores = torch.einsum('blhe,bshe->bhls', queries, keys)    # [batch, n_heads, query_len, key_len]
 
         A = self.dropout(torch.softmax(scale * attn_scores, dim=-1))    # [batch, n_heads, query_len, key_len]
-        V = torch.einsum('bhls,blhd->blhd', A, values)  # [batch, query_len, n_heads, d_v]
+        V = torch.einsum('bhls,bshd->blhd', A, values)  # [batch, query_len, n_heads, d_v]
 
         if self.output_attention:
             return V.contiguous(), A
