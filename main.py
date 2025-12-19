@@ -141,7 +141,7 @@ def arg_parser():
     parser.add_argument('--data_path', default="dataset",
                         help="dataset path")
     parser.add_argument('--result_path', default="results",
-                        help="reslut saving path")
+                        help="result saving path")
     parser.add_argument('--ckpt_path', default="checkpoints",
                         help="checkpoint saving path")
     parser.add_argument('--ckpt_name', default="itransformer_e4_s512_p16",

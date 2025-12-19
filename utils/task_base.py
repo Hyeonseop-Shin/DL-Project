@@ -27,26 +27,32 @@ class Task():
 
             # Build checkpoint path based on dataset type
             base_ckpt = getattr(args, "ckpt_path", "checkpoints")
-            dataset = getattr(args, "dataset", "").lower()
-            city = getattr(args, "city", "").lower()
-            model_name = getattr(args, "model", "model").lower()
 
-            if dataset == "weather" and city:
-                # Determine dataset type from city
-                korean_cities = ('korea', 'seoul', 'busan', 'daegu', 'gangneung', 'gwangju')
-                global_cities = ('global', 'berlin', 'la', 'newyork', 'tokyo')
-
-                if city in korean_cities:
-                    dataset_type = 'korean'
-                elif city in global_cities:
-                    dataset_type = 'global'
-                else:
-                    dataset_type = city
-
-                # Build path: checkpoints/{dataset_type}/{model}_v1
-                self.ckpt_path = os.path.join(self.root_path, base_ckpt, dataset_type, f"{model_name}_v1")
-            else:
+            # If user provides a custom ckpt_path (not default), use it directly
+            if base_ckpt != "checkpoints":
                 self.ckpt_path = os.path.join(self.root_path, base_ckpt)
+            else:
+                # Auto-build path based on dataset type
+                dataset = getattr(args, "dataset", "").lower()
+                city = getattr(args, "city", "").lower()
+                model_name = getattr(args, "model", "model").lower()
+
+                if dataset == "weather" and city:
+                    # Determine dataset type from city
+                    korean_cities = ('korea', 'seoul', 'busan', 'daegu', 'gangneung', 'gwangju')
+                    global_cities = ('global', 'berlin', 'la', 'newyork', 'tokyo')
+
+                    if city in korean_cities:
+                        dataset_type = 'korean'
+                    elif city in global_cities:
+                        dataset_type = 'global'
+                    else:
+                        dataset_type = city
+
+                    # Build path: checkpoints/{dataset_type}/{model}_v1
+                    self.ckpt_path = os.path.join(self.root_path, base_ckpt, dataset_type, f"{model_name}_v1")
+                else:
+                    self.ckpt_path = os.path.join(self.root_path, base_ckpt)
 
             os.makedirs(self.data_path, exist_ok=True)
             os.makedirs(self.result_path, exist_ok=True)

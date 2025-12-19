@@ -16,18 +16,18 @@ from dataset import weather_provider, sticker_provider
 from dataset.data_provider import Dataset_Sticker
 from dataset.data_provider_weather import Dataset_Weather
 from engine_forecasting import train_one_epoch, evaluate, forecasting
-from models import iTransformer, TimeXer, WaveFormer, WaveNet, TimesNet, TimesFormer, WaTiFormer_Unified, TimeXerWithWaveNet, TaXer, TimeXerWithHybridFeatures
+from models import iTransformer, TimeXer, WaveNet, TimesNet, WaXer, TaXer
 
 from utils.lr_scheduler import adjust_learning_rate
 from utils.task_base import Task
-from utils.tools import save_test_result
+from utils.eval.tools import save_test_result
 from utils.distributed import (
     is_main_process,
     is_dist_available_and_initialized,
     print_rank0,
     barrier
 )
-from utils.visualization import plot_forecast
+from evaluation.plot.visualization import plot_forecast
 
 class Long_Term_Forecasting(Task):
     def __init__(self, args):
@@ -98,49 +98,8 @@ class Long_Term_Forecasting(Task):
                 e_layers=self.args.e_layers,
                 dropout=self.args.dropout
             )
-        elif model_name == 'waveformer':
-            model = WaveFormer(
-                seq_len=self.args.seq_len,
-                pred_len=self.args.pred_len,
-                c_in=self.args.input_dim,
-                d_model=self.args.d_model,
-                n_heads=self.args.n_heads,
-                d_ff=self.args.d_ff,
-                dropout=self.args.dropout,
-                wave_layers=4,   # Number of WaveNet Blocks
-                trans_layers=2,  # Number of Transformer Layers
-                kernel_size=self.args.wave_kernel_size
-            )
-        elif model_name == 'timesformer':
-            model = TimesFormer(
-                seq_len=self.args.seq_len,
-                pred_len=self.args.pred_len,
-                c_in=self.args.input_dim,
-                d_model=self.args.d_model,
-                d_ff=self.args.d_ff,
-                top_k=self.args.top_k,
-                num_kernels=self.args.time_inception,
-                times_layers=2,  # Number of TimesBlocks
-                trans_layers=2,  # Number of Transformer Layers
-                n_heads=self.args.n_heads,
-                dropout=self.args.dropout,
-            )
-        elif model_name == 'watiformer':
-            model = WaTiFormer_Unified(
-                seq_len=self.args.seq_len,
-                pred_len=self.args.pred_len, 
-                c_in=self.args.input_dim,
-                d_model=self.args.d_model,
-                d_ff=self.args.d_ff,
-                n_layers=self.args.e_layers,
-                top_k=self.args.top_k,
-                num_kernels=self.args.time_inception, # TimesBlock Inception kernel num
-                n_heads=self.args.n_heads,
-                dropout=self.args.dropout,
-            )
-
         elif model_name == 'waxer':
-            model = TimeXerWithWaveNet(
+            model = WaXer(
                 # --- TimeXer Standard Args ---
                 seq_len=self.args.seq_len,
                 pred_len=self.args.pred_len,
@@ -177,32 +136,6 @@ class Long_Term_Forecasting(Task):
                 times_top_k=self.args.times_top_k,      # 주요 주기(Period) 개수
                 times_num_kernels=self.args.times_num_kernels, # 커널 개수
                 times_layers=self.args.times_layers     # Feature Extractor 층 수
-            )
-
-        elif model_name == 'timexer_hybrid':
-            model = TimeXerWithHybridFeatures(
-                # TimeXer
-                seq_len=self.args.seq_len,
-                pred_len=self.args.pred_len,
-                d_model=self.args.d_model,
-                d_ff=self.args.d_ff,
-                dropout=self.args.dropout,
-                n_heads=self.args.n_heads,
-                e_layers=self.args.e_layers,
-                patch_len=self.args.patch_len,
-                use_norm=self.args.use_norm,
-                
-                # WaveNet
-                wavenet_c_in=self.args.input_dim,
-                wavenet_d_model=self.args.wavenet_d_model,
-                wavenet_layers=self.args.wavenet_layers,
-                
-                # TimesNet
-                times_d_model=self.args.times_d_model,
-                times_d_ff=self.args.times_d_ff,
-                times_top_k=self.args.times_top_k,
-                times_num_kernels=self.args.times_num_kernels,
-                times_layers=self.args.times_layers
             )
 
         else:

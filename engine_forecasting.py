@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.distributed as dist
 
-from utils.metrics import metric
+from utils.eval.metrics import metric
 
 # Handle different PyTorch versions for autocast
 def get_autocast_context(dtype, device_type):
