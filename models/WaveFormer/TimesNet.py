@@ -106,12 +106,12 @@ class TimesBlock(nn.Module):
         xf = torch.fft.rfft(x, dim=1)
         frequency_list = abs(xf).mean(0).mean(-1)  # batch mean, channel mean
         frequency_list[0] = 0 # Ignore DC component
-        
+
         _, top_list = torch.topk(frequency_list, k)
-        top_list = top_list.detach().cpu().numpy()
-        
-        period = x.shape[1] // top_list
-        
+
+        # Keep as Python list for indexing (avoid numpy for DDP compatibility)
+        period = (x.shape[1] // top_list).tolist()
+
         return period, abs(xf).mean(-1)[:, top_list] # channel mean
 
 
@@ -168,22 +168,16 @@ class TimesNet(nn.Module):
         # 4. Process TimesBlocks
         # The blocks process the extended sequence (T + Pred)
         for i in range(self.layer):
-            enc_out = self.layer_norm(self.model[i], enc_out)
+            enc_out = self.model[i](enc_out)
 
         # 5. Final Projection [B, T+Pred, d_model] -> [B, T+Pred, N]
         dec_out = self.projection(enc_out)
-        
+
         # 6. Slice the Prediction Part (Last pred_len)
         dec_out = dec_out[:, -self.pred_len:, :]
-        
+
         # 7. De-Normalization : stdev, means shape: [B, 1, N] -> Broadcast to [B, pred_len, N]
         dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
         dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
 
         return dec_out
-
-    def layer_norm(self, layer, enc_out):
-        # Residual connection + LayerNorm style wrapper
-        # Note: TimesBlock internally has residual, but usually we apply Norm after block
-        # In official code, they apply TimesBlock then simply pass. 
-        return layer(enc_out)

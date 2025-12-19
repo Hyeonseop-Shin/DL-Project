@@ -1,18 +1,37 @@
 
 import torch
+import json
+import csv
 
 import os
 import numpy as np
 
 
 def save_test_result(metrics, training_args, ckpt_name, result_path):
-    
-    result_name = f"testing_{ckpt_name}.txt"
-    save_path = os.path.join(result_path, result_name)
+    """
+    Save test results in multiple formats (TXT, JSON, CSV).
 
+    Args:
+        metrics: Tuple of (mae, mse, rmse, mape, mspe, corr)
+        training_args: Dict of training arguments
+        ckpt_name: Checkpoint name for file naming
+        result_path: Directory to save results
+    """
     mae, mse, rmse, mape, mspe, corr = metrics
 
-    with open(save_path, "w") as f:
+    # Create metrics dict
+    metrics_dict = {
+        'MAE': float(mae),
+        'MSE': float(mse),
+        'RMSE': float(rmse),
+        'MAPE': float(mape),
+        'MSPE': float(mspe),
+        'CORR': float(corr)
+    }
+
+    # Save as TXT (human-readable)
+    txt_path = os.path.join(result_path, f"testing_{ckpt_name}.txt")
+    with open(txt_path, "w") as f:
         f.write("===== Evaluation Metrics =====\n")
         f.write(f"MAE:  {mae}\n")
         f.write(f"MSE:  {mse}\n")
@@ -24,6 +43,26 @@ def save_test_result(metrics, training_args, ckpt_name, result_path):
         f.write("\n===== Training Arguments =====\n")
         for key, value in training_args.items():
             f.write(f"{key}: {value}\n")
+
+    # Save as JSON (machine-readable)
+    json_path = os.path.join(result_path, f"testing_{ckpt_name}.json")
+    json_data = {
+        'checkpoint': ckpt_name,
+        'metrics': metrics_dict,
+        'training_args': {k: str(v) for k, v in training_args.items()}
+    }
+    with open(json_path, "w") as f:
+        json.dump(json_data, f, indent=2)
+
+    # Save as CSV (for easy import to spreadsheet)
+    csv_path = os.path.join(result_path, f"testing_{ckpt_name}.csv")
+    with open(csv_path, "w", newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Metric', 'Value'])
+        for metric_name, metric_value in metrics_dict.items():
+            writer.writerow([metric_name, metric_value])
+
+    print(f"Results saved to: {txt_path}, {json_path}, {csv_path}")
 
 class EarlyStopping:
     def __init__(self, patience=3, verbose=False, delta=0):

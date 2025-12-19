@@ -33,9 +33,12 @@ class Dataset_Weather(Dataset):
         self.set_type = type_map[flag]
         self.scale = scale
 
-        self.global_cities = ('berlin', 'la', 'newyork', 'tokyo')
-        self.korean_cities = ('seoul', 'busan', 'daegu', 'gangneung', 'gwangju')
-        if city in self.global_cities:
+        self.global_cities = ('berlin', 'la', 'newyork', 'tokyo', 'seoul')
+        self.global_merged_cities = ('berlin', 'seoul', 'tokyo')  # Cities with same row count for merging
+        self.korean_cities = ('busan', 'daegu', 'gangneung', 'gwangju')  # Seoul excluded (in global)
+        self.korean_merged_cities = ('seoul', 'busan', 'daegu', 'gangneung', 'gwangju')
+
+        if city in self.global_cities or city == 'global':
             self.root_path = os.path.join(data_path, "weather_dataset_global")
         elif city in self.korean_cities or city == 'korea':
             self.root_path = os.path.join(data_path, "weather_dataset_korea")
@@ -51,10 +54,21 @@ class Dataset_Weather(Dataset):
     def __read_data__(self):
         self.scaler = StandardScaler()
         if self.city == 'korea':
+            # Merge all Korean cities
             dfs = []
-            for korean_city_file in os.listdir(self.root_path):
-                city_name = korean_city_file.split('_')[0]
-                csv_path = os.path.join(self.root_path, korean_city_file)
+            for city_name in self.korean_merged_cities:
+                csv_path = os.path.join(self.root_path, f"{city_name}_2020-2024.csv")
+                df = pd.read_csv(csv_path)
+                df = df.rename(columns={col: f"{city_name}_{col}" for col in df.columns if col != "time"})
+                dfs.append(df)
+            df_raw = dfs[0]
+            for df in dfs[1:]:
+                df_raw = df_raw.merge(df, on="time", how="inner")
+        elif self.city == 'global':
+            # Merge global cities with same row count (berlin, seoul, tokyo)
+            dfs = []
+            for city_name in self.global_merged_cities:
+                csv_path = os.path.join(self.root_path, f"{city_name}_2020-2024.csv")
                 df = pd.read_csv(csv_path)
                 df = df.rename(columns={col: f"{city_name}_{col}" for col in df.columns if col != "time"})
                 dfs.append(df)
@@ -63,7 +77,10 @@ class Dataset_Weather(Dataset):
                 df_raw = df_raw.merge(df, on="time", how="inner")
         else:
             df_raw = pd.read_csv(os.path.join(self.root_path, self.city + '_2020-2024' + '.csv'))
-        
+
+        # Handle NaN values using forward fill then backward fill
+        df_raw = df_raw.ffill().bfill()
+
         df_raw = df_raw[::self.sample_rate]
         max_len = len(df_raw)
         self.max_len = max_len

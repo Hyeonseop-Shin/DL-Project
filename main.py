@@ -5,6 +5,7 @@ import os
 import argparse
 
 from long_term_forecasting import Long_Term_Forecasting
+from utils.distributed import setup_distributed, cleanup_distributed
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -48,6 +49,10 @@ def arg_parser():
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
     parser.add_argument('--print_iter', type=int, default=10,
                         help='Log printing iterations')
+    parser.add_argument('--save_interval', type=int, default=8,
+                        help='Save checkpoint every N epochs')
+    parser.add_argument('--viz_interval', type=int, default=32,
+                        help='Save loss curve and prediction visualization every N epochs')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--gpu_num', type=int, default=0,
@@ -161,18 +166,50 @@ def arg_parser():
     parser.add_argument('--verbose', type=str2bool, default=True)
     parser.add_argument('--mode', type=str, default='train',
                         choices=['train', 'test', 'forecast'])
-    
+
+    # DDP Arguments
+    parser.add_argument('--dist_backend', type=str, default='nccl',
+                        choices=['nccl', 'gloo'],
+                        help='Distributed backend (nccl for GPU, gloo for CPU)')
+    parser.add_argument('--find_unused_parameters', type=str2bool, default=False,
+                        help='Find unused parameters in DDP (may slow down training)')
+    parser.add_argument('--processes_per_gpu', type=int, default=1,
+                        help='Number of processes per GPU (default: 1). '
+                             'Use >1 for multi-process per GPU setup. '
+                             'E.g., with 8 GPUs and processes_per_gpu=4, '
+                             'use torchrun --nproc_per_node=32')
+
     return parser
 
 if __name__ == "__main__":
     args = arg_parser()
     args = args.parse_args()
 
-    task = Long_Term_Forecasting(args)
-    if args.mode == 'train':
-        task.train(val=args.val)
-    elif args.mode == 'test':
-        task.test()
-    elif args.mode == 'forecast':
-        task.forecast()
+    # Initialize distributed training (auto-detects torchrun env vars)
+    rank, local_rank, world_size, gpu_id = setup_distributed(
+        args.dist_backend,
+        processes_per_gpu=args.processes_per_gpu
+    )
+
+    # Store distributed info in args
+    args.rank = rank
+    args.local_rank = local_rank
+    args.world_size = world_size
+    args.gpu_id = gpu_id  # Physical GPU ID (may differ from local_rank)
+    args.distributed = world_size > 1
+
+    # Override gpu_num with gpu_id for device assignment
+    if args.distributed:
+        args.gpu_num = gpu_id
+
+    try:
+        task = Long_Term_Forecasting(args)
+        if args.mode == 'train':
+            task.train(val=args.val)
+        elif args.mode == 'test':
+            task.test()
+        elif args.mode == 'forecast':
+            task.forecast()
+    finally:
+        cleanup_distributed()
     

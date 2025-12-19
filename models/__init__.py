@@ -8,7 +8,7 @@ from .WaveFormer.WaveFormer import WaveFormer
 from .WaveFormer.TimesFormer import TimesFormer
 from .WaveFormer.WaTiFormer import WaTiFormer_Unified
 from .WaveFormer.WaXer import TimeXerWithWaveNet
-from .WaveFormer.TwoTimeXer import TimeXerWithTimesNet
+from .WaveFormer.TaXer import TaXer
 from .WaveFormer.WaTTaX import TimeXerWithHybridFeatures
 
 
@@ -21,6 +21,6 @@ __all__ = [
     "TimesFormer",
     "WaTiFormer_Unified",
     "TimeXerWithWaveNet",
-    "TimeXerWithTimesNet",
+    "TaXer",
     "TimeXerWithHybridFeatures"
 ]

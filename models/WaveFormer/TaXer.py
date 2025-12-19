@@ -154,8 +154,10 @@ class TimesBlock(nn.Module):
         frequency_list = abs(xf).mean(0).mean(-1)
         frequency_list[0] = 0
         _, top_list = torch.topk(frequency_list, k)
-        top_list = top_list.detach().cpu().numpy()
-        period = x.shape[1] // top_list
+
+        # Keep as Python list for indexing (avoid numpy for DDP compatibility)
+        period = (x.shape[1] // top_list).tolist()
+
         return period, abs(xf).mean(-1)[:, top_list]
 
 class TimesNetFeatureExtractor(nn.Module):
@@ -288,7 +290,7 @@ class Encoder(nn.Module):
 # 4. Final Integrated Model: TimeXer + TimesNet
 # ==============================================================================
 
-class TimeXerWithTimesNet(nn.Module):
+class TaXer(nn.Module):
     def __init__(self,
                  # TimeXer Params
                  seq_len=96,
