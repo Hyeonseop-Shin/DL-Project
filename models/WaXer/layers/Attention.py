@@ -1,7 +1,4 @@
-"""
-WaXer Attention Layers
-Full attention and multi-head attention wrapper.
-"""
+"""WaXer Attention Layers"""
 
 import torch
 import torch.nn as nn
@@ -9,7 +6,8 @@ import math
 
 
 class FullAttention(nn.Module):
-    """Standard scaled dot-product attention."""
+    """Scaled Dot-Product Attention"""
+
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
         super(FullAttention, self).__init__()
         self.scale = scale
@@ -20,8 +18,10 @@ class FullAttention(nn.Module):
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
         B, L, H, E = queries.shape
         _, S, _, D = values.shape
+
         scale = self.scale or 1. / math.sqrt(E)
 
+        # Attention: softmax(QK^T / sqrt(d_k)) * V
         scores = torch.einsum("blhe,bshe->bhls", queries, keys)
 
         if self.mask_flag and attn_mask is not None:
@@ -37,9 +37,11 @@ class FullAttention(nn.Module):
 
 
 class AttentionLayer(nn.Module):
-    """Multi-head attention wrapper with linear projections."""
+    """Multi-Head Attention with Linear Projections"""
+
     def __init__(self, attention, d_model, n_heads, d_keys=None, d_values=None):
         super(AttentionLayer, self).__init__()
+
         d_keys = d_keys or (d_model // n_heads)
         d_values = d_values or (d_model // n_heads)
 
@@ -55,10 +57,13 @@ class AttentionLayer(nn.Module):
         _, S, _ = keys.shape
         H = self.n_heads
 
+        # Linear projection + head split
         query = self.query_projection(queries).view(B, L, H, -1)
         key = self.key_projection(keys).view(B, S, H, -1)
         value = self.value_projection(values).view(B, S, H, -1)
 
         out, attn = self.inner_attention(query, key, value, attn_mask, tau, delta)
+
+        # Head concat + output projection
         out = out.view(B, L, -1)
         return self.out_projection(out), attn
